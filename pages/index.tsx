@@ -10,6 +10,13 @@ type ChatMessage = {
   };
 };
 
+export default function Home() {
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [filePreview, setFilePreview] = useState<{ name: string } | null>(null);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [csvSummaryText, setCsvSummaryText] = useState<string | null>(null);
+
   const [chats, setChats] = useState<{
     title: string;
     messages: ChatMessage[];
@@ -19,42 +26,18 @@ type ChatMessage = {
       messages: [
         {
           role: 'assistant',
-          content: `Hi there! I'm PNWER AI — your internal guide for all things related to PNWER. Whether you're prepping for the event, exploring contacts, or need context on key topics, I'm here to help. Just let me know what you're working on!`,
+          content: `Hi there! I'm PNWER AI — your internal guide for all things related to PNWER...`,
         },
       ],
     },
   ]);
 
+  const [currentChatIndex, setCurrentChatIndex] = useState(0);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-
-  export default function Home() {
-    const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [filePreview, setFilePreview] = useState<{ name: string } | null>(null);
-    const [droppedFile, setDroppedFile] = useState<File | null>(null);
-    const [csvSummaryText, setCsvSummaryText] = useState<string | null>(null);
-  
-    const [chats, setChats] = useState<{
-      title: string;
-      messages: ChatMessage[];
-    }[]>([
-      {
-        title: 'New Chat',
-        messages: [
-          {
-            role: 'assistant',
-            content: `Hi there! I'm PNWER AI — your internal guide for all things related to PNWER. Whether you're prepping for the event, exploring contacts, or need context on key topics, I'm here to help. Just let me know what you're working on!`,
-          },
-        ],
-      },
-    ]);
-  
-    const [currentChatIndex, setCurrentChatIndex] = useState(0);
-    const bottomRef = useRef<HTMLDivElement>(null);
-  
-    useEffect(() => {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [chats]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chats]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
