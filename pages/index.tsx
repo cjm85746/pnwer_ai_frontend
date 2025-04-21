@@ -39,6 +39,13 @@ export default function Home() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chats]);
 
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/`)
+      .then((res) => res.json())
+      .then((data) => console.log('✅ Backend response:', data))
+      .catch((err) => console.error('❌ Backend unreachable:', err));
+  }, []);
+
   const sendMessage = async () => {
     if (!input.trim()) return;
   
