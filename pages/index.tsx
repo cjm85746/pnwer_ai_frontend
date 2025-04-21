@@ -26,7 +26,7 @@ export default function Home() {
       messages: [
         {
           role: 'assistant',
-          content: `Hi there! I'm PNWER AI — your internal guide for all things related to PNWER...`,
+          content: `Hi there! I'm PNWER AI — your internal guide for all things related to PNWER. Whether you're prepping for the event, exploring contacts, or need context on key topics, I'm here to help. Just let me know what you're working on!`,
         },
       ],
     },
