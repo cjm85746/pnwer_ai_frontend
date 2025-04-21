@@ -40,15 +40,15 @@ export default function Home() {
   }, [chats]);
 
   useEffect(() => {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, ''); // Remove trailing slash just in case
+    const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    console.log("🌐 Backend base URL:", baseURL);
   
-    fetch(`${backendUrl}/`)
+    fetch(`${baseURL}/`)
       .then((res) => res.json())
-      .then((data) => console.log('✅ Backend response:', data))
-      .catch((err) => console.error('❌ Backend unreachable:', err));
+      .then((data) => console.log("✅ Backend response:", data))
+      .catch((err) => console.error("❌ Backend unreachable:", err));
   }, []);
 
-  
 
   const sendMessage = async () => {
     if (!input.trim()) return;
