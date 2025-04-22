@@ -75,15 +75,15 @@ export default function Home() {
   
     let vectorChunks: string[] = [];
     let context = '';
+    let enrichmentHandled = false;
   
     if (droppedFile) {
       const formData = new FormData();
       formData.append('file', droppedFile);
-  
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
   
       try {
-        // Case 1: Enrichment request
+        // 🧠 Case 1: If user requested enrichment
         if (shouldUpdate) {
           const enrichRes = await fetch(`https://pnwer-ai-backend.onrender.com/update-attendee-list`, {
             method: 'POST',
@@ -99,12 +99,13 @@ export default function Home() {
           setLoading(false);
           setFilePreview(null);
           setDroppedFile(null);
+          enrichmentHandled = true;
           return;
         }
   
-        // Case 2: Analysis query on uploaded CSV
+        // 🧠 Case 2: If it's a CSV and not enrichment — run vector query
         if (extension === 'csv') {
-          const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
+          const vectorRes = await fetch(`https://pnwer-ai-backend.onrender.com/vector-query`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: input, filename: droppedFile.name }),
@@ -118,8 +119,8 @@ export default function Home() {
           }
         }
   
-        // Case 3: Plain CSV upload for preview (no intent match)
-        if (extension !== 'pdf' && !shouldUpdate) {
+        // 📋 Case 3: Just uploading a CSV with no specific request
+        if (!shouldUpdate && extension === 'csv' && !context) {
           const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/upload-csv`, {
             method: 'POST',
             body: formData,
@@ -128,17 +129,17 @@ export default function Home() {
           const response = await uploadRes.json();
           const columns = response.columns?.join(', ') || 'N/A';
           const preview = response.preview ? JSON.stringify(response.preview, null, 2) : 'N/A';
-          const summary = `Filename: ${response.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
-          setCsvSummaryText(summary);
-          if (!context) context = summary;
+          context = `Filename: ${response.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
         }
       } catch (err) {
         console.error('Upload or vector-query error:', err);
       }
-    } else {
-      // Case 4: PDF-only or no file — use PDF vector context
+    }
+  
+    // 📄 Case 4: PDF (or nothing uploaded) → vector search on PDF embeddings
+    if (!droppedFile || context === '') {
       try {
-        const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
+        const vectorRes = await fetch(`https://pnwer-ai-backend.onrender.com/vector-query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: input }),
@@ -148,13 +149,14 @@ export default function Home() {
           const vectorData = await vectorRes.json();
           vectorChunks = vectorData.chunks || [];
           context = vectorChunks.join('\n\n');
-          console.log('🧠 Vector chunks returned (PDF):', vectorChunks);
+          console.log('🧠 Vector chunks returned (PDF or fallback):', vectorChunks);
         }
       } catch (err) {
-        console.error('Vector search failed:', err);
+        console.error('PDF vector search failed:', err);
       }
     }
   
+    // 🧠 Now we send to Claude with correct context
     try {
       const res = await fetch('/api/claude', {
         method: 'POST',
@@ -167,16 +169,20 @@ export default function Home() {
       });
   
       const data = await res.json();
-      newChats[currentChatIndex].messages = [...updatedMessages, { role: 'assistant', content: data.reply }];
+      newChats[currentChatIndex].messages = [
+        ...updatedMessages,
+        { role: 'assistant', content: data.reply },
+      ];
       setChats([...newChats]);
       setLoading(false);
   
+      // 💡 Optional: Auto-title chat
       if (userMsgCount === 1) {
         const topicRes = await fetch('/api/claude', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            preprompt: 'Summarize the user’s first question into a session topic in 5 words maximum, 1 line. If more than 5 words, end with "...".',
+            preprompt: 'Summarize the user’s first question into a session topic in 5 words max.',
             messages: [{ role: 'user', content: input }],
           }),
         });
@@ -192,14 +198,16 @@ export default function Home() {
       }
     } catch (err) {
       console.error('Claude API error:', err);
-      newChats[currentChatIndex].messages.push({ role: 'assistant', content: '[Error fetching reply]' });
+      newChats[currentChatIndex].messages.push({
+        role: 'assistant',
+        content: '[Error fetching reply]',
+      });
       setChats([...newChats]);
       setLoading(false);
     }
   
     setFilePreview(null);
     setDroppedFile(null);
-    setCsvSummaryText(null);
   };
   
 
