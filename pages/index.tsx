@@ -70,89 +70,89 @@ export default function Home() {
     setInput('');
     setLoading(true);
   
+    const userMsgCount = updatedMessages.filter((m) => m.role === 'user').length;
+    const messagesForClaude = updatedMessages.map(({ role, content }) => ({ role, content }));
+  
+    let vectorChunks: string[] = [];
+    let context = '';
+  
     if (droppedFile) {
       const formData = new FormData();
       formData.append('file', droppedFile);
   
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
-      let endpoint = 'upload-csv';
-      
-      if (extension === 'pdf') {
-        endpoint = 'upload-pdf';
-      } else if (extension === 'csv') {
-        endpoint = 'update-attendee-list';
-      } else if (shouldUpdate) {
-        endpoint = 'update-attendee-list';
-      }
   
       try {
-        const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/${endpoint}`, {
-          method: 'POST',
-          body: formData,
-        });
+        // Case 1: Enrichment request
+        if (shouldUpdate) {
+          const enrichRes = await fetch(`https://pnwer-ai-backend.onrender.com/update-attendee-list`, {
+            method: 'POST',
+            body: formData,
+          });
   
-        if (!uploadRes.ok) {
-          console.error('❌ Upload failed:', await uploadRes.text());
-        } else {
-          const response = await uploadRes.json();
-          console.log('✅ File uploaded:', response);
+          const enrichData = await enrichRes.json();
+          const downloadUrl = `https://pnwer-ai-backend.onrender.com${enrichData.download_url}`;
+          const summaryText = `✅ Enrichment Complete — Updated: ${enrichData.summary.updated}, Skipped: ${enrichData.summary.skipped}, Errors: ${enrichData.summary.errors}<br><br>📎 <a href="${downloadUrl}" style="color:#2563eb;text-decoration:underline;">Download CSV</a>`;
   
-          if (endpoint === 'update-attendee-list') {
-            const downloadUrl = `https://pnwer-ai-backend.onrender.com${response.download_url}`;
-
+          newChats[currentChatIndex].messages.push({ role: 'assistant', content: summaryText });
+          setChats([...newChats]);
+          setLoading(false);
+          setFilePreview(null);
+          setDroppedFile(null);
+          return;
+        }
   
-            // Show assistant message with clean spacing
-            const summaryText = `✅ Enrichment Complete — Updated: ${response.summary.updated}, Skipped: ${response.summary.skipped}, Errors: ${response.summary.errors}<br><br>📎 <a href="${downloadUrl}" style="color:#2563eb;text-decoration:underline;">Download CSV</a>`;
+        // Case 2: Analysis query on uploaded CSV
+        if (extension === 'csv') {
+          const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: input, filename: droppedFile.name }),
+          });
   
-            newChats[currentChatIndex].messages.push({
-              role: 'assistant',
-              content: summaryText,
-            });
-  
-            setChats([...newChats]);
-            setLoading(false);
-            setFilePreview(null);
-            setDroppedFile(null);
-            return;
-          }
-  
-
-          if (endpoint === 'upload-csv') {
-            if (response.status === 'success') {
-              const columns = response.columns?.join(', ') || 'N/A';
-              const preview = response.preview ? JSON.stringify(response.preview, null, 2) : 'N/A';
-              const summary = `Filename: ${response.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
-              setCsvSummaryText(summary);
-            } else {
-              setCsvSummaryText(`❌ Upload failed: ${response.message}`);
-            }
+          if (vectorRes.ok) {
+            const vectorData = await vectorRes.json();
+            vectorChunks = vectorData.chunks || [];
+            context = vectorChunks.join('\n\n');
+            console.log('🧠 Vector chunks returned (CSV):', vectorChunks);
           }
         }
+  
+        // Case 3: Plain CSV upload for preview (no intent match)
+        if (extension !== 'pdf' && !shouldUpdate) {
+          const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/upload-csv`, {
+            method: 'POST',
+            body: formData,
+          });
+  
+          const response = await uploadRes.json();
+          const columns = response.columns?.join(', ') || 'N/A';
+          const preview = response.preview ? JSON.stringify(response.preview, null, 2) : 'N/A';
+          const summary = `Filename: ${response.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
+          setCsvSummaryText(summary);
+          if (!context) context = summary;
+        }
       } catch (err) {
-        console.error('Upload error:', err);
+        console.error('Upload or vector-query error:', err);
       }
-    }
+    } else {
+      // Case 4: PDF-only or no file — use PDF vector context
+      try {
+        const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: input }),
+        });
   
-    const userMsgCount = updatedMessages.filter((m) => m.role === 'user').length;
-    const messagesForClaude = updatedMessages.map(({ role, content }) => ({ role, content }));
-  
-    let vectorChunks: string[] = [];
-    try {
-      const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: input,
-          filename: droppedFile?.name || '',
-        }),
-      });
-      if (vectorRes.ok) {
-        const vectorData = await vectorRes.json();
-        vectorChunks = vectorData.chunks || [];
-        console.log('🧠 Vector chunks returned:', vectorChunks);
+        if (vectorRes.ok) {
+          const vectorData = await vectorRes.json();
+          vectorChunks = vectorData.chunks || [];
+          context = vectorChunks.join('\n\n');
+          console.log('🧠 Vector chunks returned (PDF):', vectorChunks);
+        }
+      } catch (err) {
+        console.error('Vector search failed:', err);
       }
-    } catch (err) {
-      console.error('Vector search failed:', err);
     }
   
     try {
@@ -161,12 +161,11 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
-          context: csvSummaryText
-            ? `Here is a dataset uploaded by the user:\n\n${csvSummaryText}\n\nAnswer the following question using this data.`
-            : `The user is asking a question based on information from past annual reports.\n\nRelevant excerpts:\n${vectorChunks.slice(0, 5).join('\n\n')}`,
+          context,
           messages: messagesForClaude,
         }),
       });
+  
       const data = await res.json();
       newChats[currentChatIndex].messages = [...updatedMessages, { role: 'assistant', content: data.reply }];
       setChats([...newChats]);
@@ -181,22 +180,19 @@ export default function Home() {
             messages: [{ role: 'user', content: input }],
           }),
         });
+  
         const topicData = await topicRes.json();
         let topic = topicData.reply?.replace(/['"\n]/g, '') || '';
         const words = topic.split(/\s+/);
-        if (words.length > 5) {
-          topic = words.slice(0, 5).join(' ') + '...';
-        }
+        if (words.length > 5) topic = words.slice(0, 5).join(' ') + '...';
+  
         const renamedChats = [...newChats];
         renamedChats[currentChatIndex].title = topic;
         setChats(renamedChats);
       }
     } catch (err) {
       console.error('Claude API error:', err);
-      newChats[currentChatIndex].messages.push({
-        role: 'assistant',
-        content: '[Error fetching reply]',
-      });
+      newChats[currentChatIndex].messages.push({ role: 'assistant', content: '[Error fetching reply]' });
       setChats([...newChats]);
       setLoading(false);
     }
@@ -205,6 +201,7 @@ export default function Home() {
     setDroppedFile(null);
     setCsvSummaryText(null);
   };
+  
 
   const startNewChat = () => {
     setChats([
