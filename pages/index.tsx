@@ -225,25 +225,41 @@ export default function Home() {
   const handleFileDrop = async (file: File) => {
     setDroppedFile(file);
     setFilePreview({ name: file.name });
-
+  
     const extension = file.name.split('.').pop()?.toLowerCase();
+  
+    // 🧭 Define endpoint based on extension
+    let endpoint = '';
     if (extension === 'csv' || extension === 'xlsx' || extension === 'xls') {
-      const formData = new FormData();
-      formData.append('file', file);
-      try {
-        const uploadRes = await fetch('https://pnwer-ai-backend.onrender.com/upload-csv', {
-          method: 'POST',
-          body: formData,
-        });
-        const result = await uploadRes.json();
-        const columns = Array.isArray(result.columns) ? result.columns.join(', ') : '(No columns found)';
-        const preview = result.preview ? JSON.stringify(result.preview, null, 2) : '(No preview available)';
-        const textSummary = `Filename: ${result.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
-        setCsvSummaryText(textSummary);
-        console.log('✅ CSV Uploaded:', result);
-      } catch (err) {
-        console.error('CSV Upload error:', err);
-      }
+      endpoint = 'upload-csv';
+    } else if (extension === 'pdf') {
+      endpoint = 'upload-pdf';
+    } else {
+      console.warn('⚠️ Unsupported file type:', extension);
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    try {
+      const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/${endpoint}`, {
+        method: 'POST',
+        body: formData,
+      });
+  
+      const result = await uploadRes.json();
+      const columns = Array.isArray(result.columns)
+        ? result.columns.join(', ')
+        : '(No columns found)';
+      const preview = result.preview
+        ? JSON.stringify(result.preview, null, 2)
+        : '(No preview available)';
+      const textSummary = `Filename: ${result.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
+      setCsvSummaryText(textSummary);
+      console.log('✅ CSV Uploaded:', result);
+    } catch (err) {
+      console.error('CSV Upload error:', err);
     }
   };
 
