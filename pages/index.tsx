@@ -75,11 +75,18 @@ export default function Home() {
       formData.append('file', droppedFile);
   
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
-      let endpoint = extension === 'pdf' ? 'upload-pdf' : 'upload-csv';
-      if (shouldUpdate) endpoint = 'update-attendee-list';
+      let endpoint = 'upload-csv';
+      
+      if (extension === 'pdf') {
+        endpoint = 'upload-pdf';
+      } else if (extension === 'csv') {
+        endpoint = 'update-attendee-list';
+      } else if (shouldUpdate) {
+        endpoint = 'update-attendee-list';
+      }
   
       try {
-        const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/${endpoint}`, {
+        const uploadRes = await fetch(`http://localhost:8000/${endpoint}`, {
           method: 'POST',
           body: formData,
         });
@@ -91,7 +98,7 @@ export default function Home() {
           console.log('✅ File uploaded:', response);
   
           if (endpoint === 'update-attendee-list') {
-            const downloadUrl = `https://pnwer-ai-backend.onrender.com${response.download_url}`;
+            const downloadUrl = `https://localhost:8000${response.download_url}`;
 
   
             // Show assistant message with clean spacing
@@ -110,8 +117,14 @@ export default function Home() {
           }
   
           if (endpoint === 'upload-csv') {
-            const summary = `Filename: ${response.filename}\nColumns: ${response.columns.join(', ')}\nPreview:\n${JSON.stringify(response.preview, null, 2)}`;
-            setCsvSummaryText(summary);
+            if (response.status === 'success') {
+              const columns = response.columns?.join(', ') || 'N/A';
+              const preview = response.preview ? JSON.stringify(response.preview, null, 2) : 'N/A';
+              const summary = `Filename: ${response.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
+              setCsvSummaryText(summary);
+            } else {
+              setCsvSummaryText(`❌ Upload failed: ${response.message}`);
+            }
           }
         }
       } catch (err) {
@@ -124,7 +137,7 @@ export default function Home() {
   
     let vectorChunks: string[] = [];
     try {
-      const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
+      const vectorRes = await fetch('http://localhost:8000/vector-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: input }),
@@ -143,9 +156,10 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          preprompt: csvSummaryText
+          preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
+          context: csvSummaryText
             ? `Here is a dataset uploaded by the user:\n\n${csvSummaryText}\n\nAnswer the following question using this data.`
-            : `You are PNWER AI, a helpful assistant for PNWER. The user is asking a question based on information from past annual reports. Use the following relevant excerpts to inform your response:\n\n${vectorChunks.slice(0, 5).join('\n\n')}\n\n---END OF EXCERPTS---\nOnly answer based on these excerpts. If you don’t see the info, say so.`,
+            : `The user is asking a question based on information from past annual reports.\n\nRelevant excerpts:\n${vectorChunks.slice(0, 5).join('\n\n')}`,
           messages: messagesForClaude,
         }),
       });
@@ -213,7 +227,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append('file', file);
       try {
-        const uploadRes = await fetch('https://pnwer-ai-backend.onrender.com/upload-csv', {
+        const uploadRes = await fetch('http://localhost:8000/upload-csv', {
           method: 'POST',
           body: formData,
         });

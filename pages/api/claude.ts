@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const { messages, preprompt } = req.body;
+  const { messages, preprompt, context } = req.body;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('[Claude Error] Missing API key');
@@ -9,6 +9,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
+    // 🧠 Inject context into the conversation if provided
+    const fullMessages = context
+      ? [
+          {
+            role: 'user',
+            content: `Here’s some relevant context:\n\n${context}`,
+          },
+          ...messages,
+        ]
+      : messages;
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -20,13 +31,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         model: 'claude-3-haiku-20240307',
         max_tokens: 1000,
         system: preprompt || '',
-        messages,
+        messages: fullMessages,
       }),
     });
 
     const data = await response.json();
 
-    // ✅ Add Debug Logs
     console.log('[Claude Raw Response Status]', response.status);
     console.log('[Claude Raw Response JSON]', JSON.stringify(data, null, 2));
 
