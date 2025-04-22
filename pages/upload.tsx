@@ -12,7 +12,7 @@ export default function UploadPage() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('https://pnwer-ai-backend.onrender.com/upload-pdf', {
+      const res = await fetch('https://pnwer-ai-backend.onrender.com0/upload-pdf', {
         method: 'POST',
         body: formData,
       });
