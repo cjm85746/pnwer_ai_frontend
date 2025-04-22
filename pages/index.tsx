@@ -141,7 +141,10 @@ export default function Home() {
       const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: input }),
+        body: JSON.stringify({
+          query: input,
+          filename: droppedFile?.name || '',
+        }),
       });
       if (vectorRes.ok) {
         const vectorData = await vectorRes.json();
