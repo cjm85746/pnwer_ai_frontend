@@ -57,7 +57,7 @@ export default function Home() {
       /update.*(attendee|list)|enrich.*(attendee|list)/i.test(input) &&
       droppedFile?.name.endsWith('.csv');
   
-    const userMessage: ChatMessage = {
+    const userMessage = {
       role: 'user',
       content: input,
       ...(droppedFile && { file: { name: droppedFile.name } }),
@@ -73,23 +73,20 @@ export default function Home() {
     const userMsgCount = updatedMessages.filter((m) => m.role === 'user').length;
     const messagesForClaude = updatedMessages.map(({ role, content }) => ({ role, content }));
   
-    let vectorChunks: string[] = [];
+    let vectorChunks = [];
     let context = '';
   
     if (droppedFile) {
       const formData = new FormData();
       formData.append('file', droppedFile);
-  
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
   
       try {
-        // Case 1: Enrichment request
         if (shouldUpdate) {
-          const enrichRes = await fetch(`https://pnwer-ai-backend.onrender.com/update-attendee-list`, {
+          const enrichRes = await fetch('https://pnwer-ai-backend.onrender.com/update-attendee-list', {
             method: 'POST',
             body: formData,
           });
-  
           const enrichData = await enrichRes.json();
           const downloadUrl = `https://pnwer-ai-backend.onrender.com${enrichData.download_url}`;
           const summaryText = `✅ Enrichment Complete — Updated: ${enrichData.summary.updated}, Skipped: ${enrichData.summary.skipped}, Errors: ${enrichData.summary.errors}<br><br>📎 <a href="${downloadUrl}" style="color:#2563eb;text-decoration:underline;">Download CSV</a>`;
@@ -102,7 +99,6 @@ export default function Home() {
           return;
         }
   
-        // Case 2: Analysis query on uploaded CSV
         if (extension === 'csv') {
           const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
             method: 'POST',
@@ -114,13 +110,11 @@ export default function Home() {
             const vectorData = await vectorRes.json();
             vectorChunks = vectorData.chunks || [];
             context = vectorChunks.join('\n\n');
-            console.log('🧠 Vector chunks returned (CSV):', vectorChunks);
           }
         }
   
-        // Case 3: Plain CSV upload for preview (no intent match)
-        if (extension !== 'pdf' && !shouldUpdate && !context) {
-          const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/upload-csv`, {
+        if (!shouldUpdate && extension !== 'pdf' && !context) {
+          const uploadRes = await fetch('https://pnwer-ai-backend.onrender.com/upload-csv', {
             method: 'POST',
             body: formData,
           });
@@ -134,7 +128,6 @@ export default function Home() {
         console.error('Upload or vector-query error:', err);
       }
     } else {
-      // Case 4: PDF-only or no file — use PDF vector context
       try {
         const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
           method: 'POST',
@@ -146,7 +139,6 @@ export default function Home() {
           const vectorData = await vectorRes.json();
           vectorChunks = vectorData.chunks || [];
           context = vectorChunks.join('\n\n');
-          console.log('🧠 Vector chunks returned (PDF):', vectorChunks);
         }
       } catch (err) {
         console.error('Vector search failed:', err);
@@ -158,7 +150,7 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
+          preprompt: 'You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.',
           context,
           messages: messagesForClaude,
         }),
@@ -174,16 +166,14 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            preprompt: 'Summarize the user’s first question into a session topic in 5 words maximum, 1 line. If more than 5 words, end with "...".',
+            preprompt: 'Summarize the user’s first question into a session topic in 5 words maximum, 1 line. If more than 5 words, end with "..."',
             messages: [{ role: 'user', content: input }],
           }),
         });
-  
         const topicData = await topicRes.json();
         let topic = topicData.reply?.replace(/['"\n]/g, '') || '';
         const words = topic.split(/\s+/);
         if (words.length > 5) topic = words.slice(0, 5).join(' ') + '...';
-  
         const renamedChats = [...newChats];
         renamedChats[currentChatIndex].title = topic;
         setChats(renamedChats);
