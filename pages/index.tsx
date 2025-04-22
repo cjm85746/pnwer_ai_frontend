@@ -207,7 +207,7 @@ export default function Home() {
   const handleFileDrop = async (file: File) => {
     setDroppedFile(file);
     setFilePreview({ name: file.name });
-
+  
     const extension = file.name.split('.').pop()?.toLowerCase();
     if (extension === 'csv' || extension === 'xlsx' || extension === 'xls') {
       const formData = new FormData();
@@ -218,9 +218,12 @@ export default function Home() {
           body: formData,
         });
         const result = await uploadRes.json();
-        const columns = Array.isArray(result.columns) ? result.columns.join(', ') : '(No columns found)';
-        const preview = result.preview ? JSON.stringify(result.preview, null, 2) : '(No preview available)';
-        const textSummary = `Filename: ${result.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
+        const columns = Array.isArray(result.columns)
+          ? result.columns.join(', ')
+          : '(No columns found)';
+        const preview = result.preview
+          ? JSON.stringify(result.preview, null, 2)
+          : '(No preview available)';
         console.log('✅ CSV Uploaded:', result);
       } catch (err) {
         console.error('CSV Upload error:', err);
