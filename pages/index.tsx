@@ -86,7 +86,7 @@ export default function Home() {
       }
   
       try {
-        const uploadRes = await fetch(`http://localhost:8000/${endpoint}`, {
+        const uploadRes = await fetch(`https://pnwer-ai-backend.onrender.com/${endpoint}`, {
           method: 'POST',
           body: formData,
         });
@@ -98,7 +98,7 @@ export default function Home() {
           console.log('✅ File uploaded:', response);
   
           if (endpoint === 'update-attendee-list') {
-            const downloadUrl = `https://localhost:8000${response.download_url}`;
+            const downloadUrl = `https://pnwer-ai-backend.onrender.com${response.download_url}`;
 
   
             // Show assistant message with clean spacing
@@ -116,6 +116,7 @@ export default function Home() {
             return;
           }
   
+
           if (endpoint === 'upload-csv') {
             if (response.status === 'success') {
               const columns = response.columns?.join(', ') || 'N/A';
@@ -137,7 +138,7 @@ export default function Home() {
   
     let vectorChunks: string[] = [];
     try {
-      const vectorRes = await fetch('http://localhost:8000/vector-query', {
+      const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: input }),
@@ -227,7 +228,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append('file', file);
       try {
-        const uploadRes = await fetch('http://localhost:8000/upload-csv', {
+        const uploadRes = await fetch('https://pnwer-ai-backend.onrender.com/upload-csv', {
           method: 'POST',
           body: formData,
         });
