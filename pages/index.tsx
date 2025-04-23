@@ -111,11 +111,14 @@ export default function Home() {
           const response = await uploadRes.json();
           console.log('✅ File uploaded:', response);
 
-          if (response.vector_dir) {
+          if (response && response.vector_dir) {
             setVectorDir(response.vector_dir);
             localVectorDir = response.vector_dir;
             console.log("🗂️ Vector directory set to:", response.vector_dir);
+          } else {
+            console.warn("⚠️ Upload response missing vector_dir:", response);
           }
+          await new Promise((res) => setTimeout(res, 200));
 
           if (endpoint === 'update-attendee-list') {
             isEnrichment = true;
@@ -173,7 +176,7 @@ export default function Home() {
       console.log("📤 Sending vector query with:", {
         query: input,
         filename: droppedFile?.name || '',
-        vector_dir: localVectorDir,
+        vector_dir: localVectorDir || vectorDir,
       });
 
       const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
@@ -182,7 +185,7 @@ export default function Home() {
         body: JSON.stringify({
           query: input,
           filename: droppedFile?.name || '',
-          vector_dir: localVectorDir,
+          vector_dir: localVectorDir || vectorDir,
         }),
       });
 
