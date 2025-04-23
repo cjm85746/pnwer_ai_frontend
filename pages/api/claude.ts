@@ -20,6 +20,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ]
       : messages;
 
+    // Debug logs before making the Claude API request
     console.log('[Claude Debug] Preprompt:', preprompt);
     console.log('[Claude Debug] Context:', context);
     console.log('[Claude Debug] Messages:', JSON.stringify(fullMessages, null, 2));

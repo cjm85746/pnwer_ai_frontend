@@ -61,6 +61,7 @@ export default function Home() {
     if (!input.trim()) return;
 
 
+
     const userMessage: ChatMessage = {
       role: 'user',
       content: input,
@@ -177,6 +178,11 @@ export default function Home() {
     }
 
     try {
+      console.log("🧠 Claude call input:", {
+        preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
+        context: vectorChunks.length ? vectorChunks.slice(0, 5).join('\n\n') : '',
+        messages: messagesForClaude,
+      });
       const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
