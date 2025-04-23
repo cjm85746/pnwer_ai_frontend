@@ -39,8 +39,8 @@ export default function Home() {
   }, [chats]);
 
   useEffect(() => {
-    const baseURL = process.env.NEXT_PUBLIC_API_URL;
-    console.log("🌐 Backend base URL:", baseURL);
+    const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');,
+    await fetch(`${baseURL}/vector-query`);
   
     fetch(`${baseURL}/`)
       .then((res) => res.json())
