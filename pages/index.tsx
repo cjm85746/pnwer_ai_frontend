@@ -39,13 +39,23 @@ export default function Home() {
   }, [chats]);
 
   useEffect(() => {
-    const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');,
-    await fetch(`${baseURL}/vector-query`);
+    const fetchData = async () => {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');
+      if (!baseURL) {
+        console.error("❌ No backend base URL set.");
+        return;
+      }
   
-    fetch(`${baseURL}/`)
-      .then((res) => res.json())
-      .then((data) => console.log("✅ Backend response:", data))
-      .catch((err) => console.error("❌ Backend unreachable:", err));
+      try {
+        const res = await fetch(`${baseURL}/`);
+        const data = await res.json();
+        console.log("✅ Backend response:", data);
+      } catch (err) {
+        console.error("❌ Backend unreachable:", err);
+      }
+    };
+  
+    fetchData();
   }, []);
 
 
