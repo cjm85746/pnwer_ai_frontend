@@ -144,9 +144,26 @@ export default function Home() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (!vectorDir) {
-        console.warn("❌ Missing vector_dir – please specify uploaded file reference.");
+      if (droppedFile?.name.endsWith(".pdf") && !vectorDir) {
+        console.warn("❌ PDF uploaded but no vector_dir found.");
+        newChats[currentChatIndex].messages.push({
+          role: 'assistant',
+          content: "⚠️ I couldn't process the uploaded PDF. Please try again or upload a different file.",
+        });
+        setChats([...newChats]);
         setLoading(false);
+        return;
+      }
+
+      if (droppedFile?.name.endsWith('.csv') && !isEnrichment) {
+        newChats[currentChatIndex].messages.push({
+          role: 'assistant',
+          content: "✅ CSV file received. I’ll do my best to assist, but this file hasn’t been enriched. You can ask me to update or enrich it if needed.",
+        });
+        setChats([...newChats]);
+        setLoading(false);
+        setFilePreview(null);
+        setDroppedFile(null);
         return;
       }
 
