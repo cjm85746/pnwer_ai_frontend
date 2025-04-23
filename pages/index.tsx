@@ -116,11 +116,6 @@ export default function Home() {
               content: summaryText,
             });
   
-            setChats([...newChats]);
-            setLoading(false);
-            setFilePreview(null);
-            setDroppedFile(null);
-            return;
           }
   
           if (endpoint === 'upload-csv' && response.status === 'success') {
@@ -161,7 +156,9 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
-          context: vectorChunks.slice(0, 5).join('\n\n'),
+          context: isEnrichment
+            ? `The user uploaded and enriched a CSV file. Their message was: "${input}". Use your knowledge to respond helpfully even if raw data isn't available.`
+            : vectorChunks.slice(0, 5).join('\n\n'),
           messages: messagesForClaude,
         }),
       });
