@@ -161,16 +161,12 @@ export default function Home() {
     } catch (err) {
       console.error('Vector search failed:', err);
     }
-    
     try {
       const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
-          context: isEnrichment
-            ? `The user uploaded and enriched a CSV file. Their message was: "${input}". Use your knowledge to respond helpfully even if raw data isn't available.`
-            : vectorChunks.slice(0, 5).join('\n\n'),
           messages: messagesForClaude,
         }),
       });
