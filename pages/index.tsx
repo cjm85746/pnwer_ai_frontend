@@ -84,12 +84,19 @@ export default function Home() {
       formData.append('file', droppedFile);
 
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
-      let endpoint = 'upload-csv';
-
+      let endpoint = '';
       if (extension === 'pdf') {
         endpoint = 'upload-pdf';
-      } else if (shouldUpdate || extension === 'csv') {
+      } else if (shouldUpdate) {
         endpoint = 'update-attendee-list';
+      } else if (extension === 'csv') {
+        endpoint = 'upload-csv';
+      }
+
+      if (!endpoint) {
+        console.warn("⚠️ No valid upload endpoint determined.");
+        setLoading(false);
+        return;
       }
 
       try {
