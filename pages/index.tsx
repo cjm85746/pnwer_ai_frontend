@@ -132,7 +132,11 @@ export default function Home() {
     const messagesForClaude = updatedMessages.map(({ role, content }) => ({ role, content }));
   
     let vectorChunks: string[] = [];
+
     try {
+      // ⏳ Wait briefly to ensure embedding is complete
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
+
       const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,15 +145,23 @@ export default function Home() {
           filename: droppedFile?.name || '',
         }),
       });
+
       if (vectorRes.ok) {
         const vectorData = await vectorRes.json();
         vectorChunks = vectorData.chunks || [];
-        console.log('🧠 Vector chunks returned:', vectorChunks);
+
+        if (vectorChunks.length === 0) {
+          console.warn('⚠️ No relevant vector context found. Sending fallback prompt.');
+        } else {
+          console.log('🧠 Vector chunks returned:', vectorChunks);
+        }
+      } else {
+        console.error('❌ Vector query failed:', await vectorRes.text());
       }
     } catch (err) {
       console.error('Vector search failed:', err);
     }
-  
+    
     try {
       const res = await fetch('/api/claude', {
         method: 'POST',
