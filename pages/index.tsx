@@ -110,12 +110,14 @@ export default function Home() {
             isEnrichment = true;
             const downloadUrl = `https://pnwer-ai-backend.onrender.com${response.download_url}`;
             const summaryText = `✅ Enrichment Complete — Updated: ${response.summary.updated}, Skipped: ${response.summary.skipped}, Errors: ${response.summary.errors}<br><br>📎 <a href="${downloadUrl}" style="color:#2563eb;text-decoration:underline;">Download CSV</a>`;
-  
+
             newChats[currentChatIndex].messages.push({
               role: 'assistant',
               content: summaryText,
             });
-  
+            // Clear file input after enrichment
+            setFilePreview(null);
+            setDroppedFile(null);
           }
   
           if (endpoint === 'upload-csv' && response.status === 'success') {
