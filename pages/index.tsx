@@ -183,7 +183,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preprompt: `You are PNWER AI, a helpful assistant for PNWER. Answer based on the provided context.`,
-          context: vectorChunks.slice(0, 5).join('\n\n'),
+          context: vectorChunks.length ? vectorChunks.slice(0, 5).join('\n\n') : '',
           messages: messagesForClaude,
         }),
       });
