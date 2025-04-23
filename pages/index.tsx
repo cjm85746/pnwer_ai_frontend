@@ -114,7 +114,6 @@ export default function Home() {
           }
   
           if (endpoint === 'upload-csv' && response.status === 'success') {
-            const summary = `Filename: ${response.filename}\nColumns: ${(response.columns || []).join(', ') || 'N/A'}\nPreview:\n${response.preview ? JSON.stringify(response.preview, null, 2) : 'N/A'}`;
           }
         }
       } catch (err) {
@@ -229,7 +228,6 @@ export default function Home() {
         const result = await uploadRes.json();
         const columns = Array.isArray(result.columns) ? result.columns.join(', ') : '(No columns found)';
         const preview = result.preview ? JSON.stringify(result.preview, null, 2) : '(No preview available)';
-        const textSummary = `Filename: ${result.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
         console.log('✅ CSV Uploaded:', result);
       } catch (err) {
         console.error('CSV Upload error:', err);
