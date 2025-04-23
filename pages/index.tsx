@@ -118,6 +118,8 @@ export default function Home() {
 
           if (endpoint === 'update-attendee-list') {
             isEnrichment = true;
+          }
+          if (isEnrichment && response.download_url) {
             const downloadUrl = `https://pnwer-ai-backend.onrender.com${response.download_url}`;
             const summaryText = `✅ Enrichment Complete — Updated: ${response.summary.updated}, Skipped: ${response.summary.skipped}, Errors: ${response.summary.errors}<br><br>📎 <a href="${downloadUrl}" style="color:#2563eb;text-decoration:underline;">Download CSV</a>`;
 
@@ -275,6 +277,7 @@ export default function Home() {
   const handleFileDrop = async (file: File) => {
     setDroppedFile(file);
     setFilePreview({ name: file.name });
+    setVectorDir(''); // 🧹 Reset old vector context when a new file is uploaded
   };
 
   const removeFile = () => {
