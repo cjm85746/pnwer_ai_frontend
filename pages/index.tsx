@@ -144,6 +144,12 @@ export default function Home() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      if (!vectorDir) {
+        console.warn("❌ Missing vector_dir – please specify uploaded file reference.");
+        setLoading(false);
+        return;
+      }
+
       console.log("📤 Sending vector query with:", {
         query: input,
         filename: droppedFile?.name || '',
