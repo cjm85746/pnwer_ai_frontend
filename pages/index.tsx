@@ -60,7 +60,7 @@ export default function Home() {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-
+    let localVectorDir = '';
 
     const userMessage: ChatMessage = {
       role: 'user',
@@ -113,6 +113,7 @@ export default function Home() {
 
           if (response.vector_dir) {
             setVectorDir(response.vector_dir);
+            localVectorDir = response.vector_dir;
             console.log("🗂️ Vector directory set to:", response.vector_dir);
           }
 
@@ -146,7 +147,7 @@ export default function Home() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (droppedFile?.name.endsWith(".pdf") && !vectorDir) {
+      if (droppedFile?.name.toLowerCase().endsWith('.pdf') && !localVectorDir) {
         console.warn("❌ PDF uploaded but no vector_dir found.");
         newChats[currentChatIndex].messages.push({
           role: 'assistant',
@@ -172,7 +173,7 @@ export default function Home() {
       console.log("📤 Sending vector query with:", {
         query: input,
         filename: droppedFile?.name || '',
-        vector_dir: vectorDir,
+        vector_dir: localVectorDir,
       });
 
       const vectorRes = await fetch('https://pnwer-ai-backend.onrender.com/vector-query', {
@@ -181,7 +182,7 @@ export default function Home() {
         body: JSON.stringify({
           query: input,
           filename: droppedFile?.name || '',
-          vector_dir: vectorDir,
+          vector_dir: localVectorDir,
         }),
       });
 
