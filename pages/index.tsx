@@ -85,9 +85,11 @@ export default function Home() {
 
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
       let endpoint = '';
+      const userWantsEnrichment = /update.*(attendee|list)|enrich.*(attendee|list)/i.test(input);
+
       if (extension === 'pdf') {
         endpoint = 'upload-pdf';
-      } else if (shouldUpdate) {
+      } else if (userWantsEnrichment && extension === 'csv') {
         endpoint = 'update-attendee-list';
       } else if (extension === 'csv') {
         endpoint = 'upload-csv';

@@ -20,6 +20,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ]
       : messages;
 
+    console.log('[Claude Debug] Preprompt:', preprompt);
+    console.log('[Claude Debug] Context:', context);
+    console.log('[Claude Debug] Messages:', JSON.stringify(fullMessages, null, 2));
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
