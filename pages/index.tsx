@@ -41,7 +41,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+\$/, '');
+      const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');
       if (!baseURL) {
         console.error("❌ No backend base URL set.");
         return;
