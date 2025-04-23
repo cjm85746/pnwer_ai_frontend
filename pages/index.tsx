@@ -15,7 +15,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [filePreview, setFilePreview] = useState<{ name: string } | null>(null);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
-  const [csvSummaryText, setCsvSummaryText] = useState<string | null>(null);
 
   const [chats, setChats] = useState<{
     title: string;
@@ -116,7 +115,6 @@ export default function Home() {
   
           if (endpoint === 'upload-csv' && response.status === 'success') {
             const summary = `Filename: ${response.filename}\nColumns: ${(response.columns || []).join(', ') || 'N/A'}\nPreview:\n${response.preview ? JSON.stringify(response.preview, null, 2) : 'N/A'}`;
-            setCsvSummaryText(summary);
           }
         }
       } catch (err) {
@@ -197,7 +195,6 @@ export default function Home() {
   
     setFilePreview(null);
     setDroppedFile(null);
-    setCsvSummaryText(null);
   };
 
   const startNewChat = () => {
@@ -233,7 +230,6 @@ export default function Home() {
         const columns = Array.isArray(result.columns) ? result.columns.join(', ') : '(No columns found)';
         const preview = result.preview ? JSON.stringify(result.preview, null, 2) : '(No preview available)';
         const textSummary = `Filename: ${result.filename}\nColumns: ${columns}\nPreview:\n${preview}`;
-        setCsvSummaryText(textSummary);
         console.log('✅ CSV Uploaded:', result);
       } catch (err) {
         console.error('CSV Upload error:', err);
@@ -244,7 +240,6 @@ export default function Home() {
   const removeFile = () => {
     setFilePreview(null);
     setDroppedFile(null);
-    setCsvSummaryText(null);
   };
 
   return (
