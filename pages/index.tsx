@@ -60,9 +60,6 @@ export default function Home() {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const shouldUpdate =
-      /update.*(attendee|list)|enrich.*(attendee|list)/i.test(input) &&
-      droppedFile?.name.endsWith('.csv');
 
     const userMessage: ChatMessage = {
       role: 'user',
