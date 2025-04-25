@@ -83,7 +83,7 @@ export default function Home() {
 
       const extension = droppedFile.name.split('.').pop()?.toLowerCase();
       let endpoint = '';
-      const userWantsEnrichment = /update.*(attendee|list)|enrich.*(attendee|list)/i.test(input);
+      const userWantsEnrichment = /(update|enrich).*?(attendee|list)/i.test(input);
 
       if (extension === 'pdf') {
         endpoint = 'upload-pdf';
@@ -115,6 +115,14 @@ export default function Home() {
             setVectorDir(response.vector_dir);
             localVectorDir = response.vector_dir;
             console.log("🗂️ Vector directory set to:", response.vector_dir);
+          } else if (isEnrichment && !response.vector_dir) {
+            newChats[currentChatIndex].messages.push({
+              role: 'assistant',
+              content: "⚠️ Enrichment attempted, but no updated vector directory was received. Please check the enrichment process or retry.",
+            });
+            setChats([...newChats]);
+            setLoading(false);
+            return;
           } else {
             console.warn("⚠️ Upload response missing vector_dir:", response);
           }
@@ -133,6 +141,12 @@ export default function Home() {
             });
             setFilePreview(null);
             setDroppedFile(null);
+          } else if (isEnrichment && !response.download_url) {
+            newChats[currentChatIndex].messages.push({
+              role: 'assistant',
+              content: `⚠️ Enrichment completed but no file was returned. Check the server logs for any save/export errors.`,
+            });
+            setChats([...newChats]);
           }
         }
       } catch (err) {
