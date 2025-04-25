@@ -140,7 +140,8 @@ export default function Home() {
       }
     }
 
-    if (isEnrichment) return;
+    // ✅ Proceed to Claude after enrichment
+    await new Promise((res) => setTimeout(res, 500)); // Optional: can be shortened for faster response
 
     const userMsgCount = updatedMessages.filter((m) => m.role === 'user').length;
     const messagesForClaude = updatedMessages.map(({ role, content }) => ({ role, content }));
@@ -148,7 +149,7 @@ export default function Home() {
     let vectorChunks: string[] = [];
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       if (droppedFile?.name.toLowerCase().endsWith('.pdf') && !localVectorDir) {
         console.warn("❌ PDF uploaded but no vector_dir found.");
